@@ -9,7 +9,7 @@ def get_citation_args():
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 
     ## 调试
-    parser.add_argument('--epoch', type=int, default=200,
+    parser.add_argument('--epoch', type=int, default=2000,
                         help='Number of epochs to train.')
     parser.add_argument('--lr', type=float, default=0.0005,
                         help='Initial learning rate.')

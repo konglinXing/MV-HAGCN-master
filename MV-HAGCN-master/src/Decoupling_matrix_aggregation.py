@@ -19,20 +19,20 @@
 #
 #
 # # def adj_matrix_weight_merge(A, adj_weight):
-# #     """扩展为支持5个矩阵的聚合"""
+# #     """Expanded to support aggregation of 5 matrices"""
 # #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # #     N = A[0].shape[0]
 # #     temp = coo_matrix((N, N))
 # #     temp = coototensor(temp)
 # #
-# #     # 扩展为5个矩阵
+# #
 # #     a = coototensor(csc_matrix(A[0]).tocoo())
 # #     b = coototensor(csc_matrix(A[1]).tocoo())
 # #     c = coototensor(csc_matrix(A[2]).tocoo())
-# #     d = coototensor(csc_matrix(A[3]).tocoo())  # 新增：序列相似性
-# #     e = coototensor(csc_matrix(A[4]).tocoo())  # 新增：家族相似性
+# #     d = coototensor(csc_matrix(A[3]).tocoo())
+# #     e = coototensor(csc_matrix(A[4]).tocoo())
 # #
-# #     A_t = torch.stack([a, b, c, d, e], dim=2).to_dense()  # 扩展为5个
+# #     A_t = torch.stack([a, b, c, d, e], dim=2).to_dense()
 # #
 # #     A_t = A_t.to(device)
 # #     temp = torch.matmul(A_t, adj_weight)
@@ -41,21 +41,21 @@
 # #     return temp
 # def adj_matrix_weight_merge(A, adj_weight):
 #     """
-#     Multiplex Relation Aggregation - 动态处理任意数量的矩阵
+#     Multiplex Relation Aggregation - Dynamically process any number of matrices
 #     """
 #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #     N = A[0].shape[0]
 #     temp = coo_matrix((N, N))
 #     temp = coototensor(temp)
 #
-#     # 动态处理矩阵数量
+#     # Number of Dynamic Processing Matrices
 #     num_matrices = len(A)
 #     matrices = []
 #
 #     for i in range(num_matrices):
 #         matrices.append(coototensor(csc_matrix(A[i]).tocoo()))
 #
-#     # 使用动态数量的矩阵
+#     # Using matrices with dynamic quantities
 #     A_t = torch.stack(matrices, dim=2).to_dense()
 #
 #     A_t = A_t.to(device)
@@ -73,15 +73,15 @@ from scipy.sparse import coo_matrix, csc_matrix
 
 def adj_matrix_weight_merge(A, adj_weight):
     """
-    简化版本的矩阵聚合，避免稀疏张量转换问题
-    直接在numpy中处理，然后转换为tensor
+    Simplified matrix aggregation to avoid sparse tensor conversion issues
+Processed directly in NumPy, then converted to a tensor
     """
     device = adj_weight.device
 
-    # 获取矩阵数量
+    # Get the number of matrices
     num_matrices = len(A)
 
-    # 初始化结果矩阵
+    # Initialize the result matrix
     if isinstance(A[0], np.ndarray):
         result_shape = A[0].shape
         result = np.zeros(result_shape, dtype=np.float32)
@@ -89,35 +89,33 @@ def adj_matrix_weight_merge(A, adj_weight):
         result_shape = A[0].shape
         result = np.zeros(result_shape, dtype=np.float32)
 
-    # 对每个矩阵应用权重并累加
+    # Apply weights to each matrix and accumulate them.
     for i in range(num_matrices):
         if i < adj_weight.shape[0]:
             weight = adj_weight[i].item()
 
-            # 处理不同类型的矩阵输入
+            # Processing different types of matrix inputs
             if isinstance(A[i], np.ndarray):
                 matrix_data = A[i]
-            elif hasattr(A[i], 'toarray'):  # 稀疏矩阵
+            elif hasattr(A[i], 'toarray'):  # Sparse Matrix
                 matrix_data = A[i].toarray()
             elif isinstance(A[i], torch.Tensor):
                 matrix_data = A[i].cpu().numpy()
             else:
                 matrix_data = np.array(A[i])
 
-            # 应用权重并累加
+            # Apply weights and accumulate
             result += weight * matrix_data
 
-    # 转换为torch tensor并移到目标设备
+    # Convert to a torch tensor and move it to the target device
     return torch.from_numpy(result).float().to(device)
 
 
 def adj_matrix_weight_merge_simple(A, adj_weight):
-    """
-    更简单的版本：直接使用numpy处理，避免所有torch稀疏张量问题
-    """
+
     device = adj_weight.device
 
-    # 在CPU上使用numpy处理所有计算
+    # Perform all computations using NumPy on the CPU
     num_matrices = len(A)
     result = np.zeros(A[0].shape, dtype=np.float32)
 
@@ -125,7 +123,7 @@ def adj_matrix_weight_merge_simple(A, adj_weight):
         if i < adj_weight.shape[0]:
             weight = adj_weight[i].item()
 
-            # 转换为numpy数组
+            # Convert to a NumPy array
             if isinstance(A[i], torch.Tensor):
                 matrix_np = A[i].cpu().numpy()
             elif hasattr(A[i], 'toarray'):

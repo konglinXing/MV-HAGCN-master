@@ -6,7 +6,7 @@ from sklearn.metrics import precision_recall_curve, roc_auc_score, f1_score, auc
 import torch.nn.functional as F
 from src.args import get_citation_args
 
-# from yijian.line import example_plot1
+
 
 args = get_citation_args()
 
@@ -103,7 +103,7 @@ def link_prediction_evaluate(model, true_edges, false_edges):
             prediction_list.append(tmp_score)
 
     sorted_pred = prediction_list[:]
-    # 排序
+    # Sorting
     sorted_pred.sort()
     threshold = sorted_pred[-true_num]
     y_pred = np.zeros(len(prediction_list), dtype=np.int32)
@@ -124,7 +124,7 @@ def predict_model(model, file_name, feature, A, B, o_ass, eval_type, lr, length,
     Link prediction training proces
     """
     if dataset == 1:
-        # 筛选后
+        # After screening
         valid_true_data_by_edge, valid_false_data_by_edge = load_testing_data(file_name + '/train7.txt')
         testing_true_data_by_edge, testing_false_data_by_edge = load_testing_data(file_name + '/test7_1.txt')
     else:
@@ -167,13 +167,13 @@ def predict_model(model, file_name, feature, A, B, o_ass, eval_type, lr, length,
                     # tmp_score = get_score(final_model, str(edge[0]), str(edge[1])) # for amazon
                     emb_false_first.append(emb[int(float(edge[0])) - 1])
                     emb_false_second.append(emb[int(float(edge[1])) + 494])
-            # feature维度878
+            # Feature Dimension 878
             emb_true_first = torch.cat(emb_true_first).reshape(-1, length)
             emb_true_second = torch.cat(emb_true_second).reshape(-1, length)
             emb_false_first = torch.cat(emb_false_first).reshape(-1, length)
             emb_false_second = torch.cat(emb_false_second).reshape(-1, length)
 
-            # @表示矩阵乘法， 12000*12000
+            # @Denotes matrix multiplication, 12000*12000
             T1 = emb_true_first @ emb_true_second.T
             T2 = -(emb_false_first @ emb_false_second.T)
 
@@ -188,14 +188,14 @@ def predict_model(model, file_name, feature, A, B, o_ass, eval_type, lr, length,
             # T4 = -(torch.mm(emb_false_first[20000:30000], emb_false_second.T[:, 20000:30000]))
             # T5 = -(torch.mm(emb_false_first[30000:], emb_false_second.T[:, 30000:]))
 
-            # diag取对角线元素,1*60
+            # diag Retrieve diagonal elements,1*60
             pos_out = torch.diag(T1)
             neg_out = torch.diag(T2)
             # neg_out1 = torch.diag(T3)
             # neg_out2 = torch.diag(T4)
             # neg_out3 = torch.diag(T5)
 
-            # mean返回所有元素平均值
+            # mean returns the average of all elements
             loss = -torch.mean(F.logsigmoid(pos_out)) - torch.mean(F.logsigmoid(neg_out))
             # loss = -torch.mean(F.logsigmoid(pos_out)) - torch.mean(F.logsigmoid(neg_out)) - torch.mean(
             #     F.logsigmoid(neg_out1)) - torch.mean(F.logsigmoid(neg_out2)) - torch.mean(F.logsigmoid(neg_out3))
@@ -242,7 +242,7 @@ def predict_model(model, file_name, feature, A, B, o_ass, eval_type, lr, length,
                                                                                                              '1'],
                                                                                                          testing_false_data_by_edge[
                                                                                                             '1'])
-                    # 将ps和rs保存到列表中
+                    # Save ps and rs to the list.
                     ps_list.append(ps)
                     rs_list.append(rs)
 

@@ -25,14 +25,14 @@ def load_our_data(dataset_str, cuda=True):
     data = loadmat('data/' + dataset_str + '.mat')
 
     node_features = data['feature']
-    features = csr_matrix(node_features)  # 转化为稀疏矩阵，那么打印出来的只有非零的下标以及它的值
+    features = csr_matrix(node_features)  # Convert to sparse matrix
 
     try:
-        # 特征转换为int类型
+        # Convert the feature to an int type
         features = features.astype(np.int16)
     except:
         pass
-    # 类型转换 numpy ->  torch
+    # Type Conversion numpy ->  torch
     features = torch.FloatTensor(np.array(features.todense())).float()
 
     if cuda:

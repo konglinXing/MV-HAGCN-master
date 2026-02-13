@@ -1,32 +1,32 @@
 import torch
-torch.manual_seed(0)  # 设置CPU随机种子为0
-torch.cuda.manual_seed_all(0)  # 设置所有GPU的随机种子为0
-torch.backends.cudnn.deterministic = True  # 启用CuDNN确定性算法（保证结果可复现）
-torch.backends.cudnn.benchmark = False  # 禁用CuDNN自动优化（避免引入随机性）
-import torch.nn as nn  # 导入PyTorch神经网络模块
+torch.manual_seed(0)  # Set the CPU random seed to 0
+torch.cuda.manual_seed_all(0)  # Set the random seed for all GPUs to 0.
+torch.backends.cudnn.deterministic = True  # Enable CuDNN deterministic algorithms (guaranteeing reproducible results)
+torch.backends.cudnn.benchmark = False  # Disable CuDNN auto-optimization (to avoid introducing randomness)
+import torch.nn as nn  # Import PyTorch neural network modules
 
-#定义逻辑回归模型 LogReg
+#Define a Logistic Regression Model LogReg
 class LogReg(nn.Module):
     """
     Logical classifier
     """
 
     def __init__(self, ft_in, nb_classes):
-        super(LogReg, self).__init__()  # 继承父类nn.Module的初始化方法
-        self.fc = nn.Linear(ft_in, nb_classes)  # 定义全连接层
+        super(LogReg, self).__init__()  # Initialization method inheriting from parent class nn.Module
+        self.fc = nn.Linear(ft_in, nb_classes)  # Define the fully connected layer
 
-        # 遍历所有子模块并初始化权重
+        # Iterate through all submodules and initialize weights.
         for m in self.modules():
             self.weights_init(m)
 
-# 权重初始化方法
+# Weight Initialization Method
     def weights_init(self, m):
-        if isinstance(m, nn.Linear):  # 检查模块是否为线性层
-            torch.nn.init.xavier_uniform_(m.weight.data)  # Xavier均匀分布初始化权重
+        if isinstance(m, nn.Linear):  # Check whether the module is a linear layer
+            torch.nn.init.xavier_uniform_(m.weight.data)  # Xavier uniform distribution weight initialization
             if m.bias is not None:
-                m.bias.data.fill_(0.0)  # 偏置初始化为0
+                m.bias.data.fill_(0.0)  # Bias initialized to zero
 
-#前向传播
+#Forward Propagation
     def forward(self, seq):
-        ret = self.fc(seq)  # 输入数据通过全连接层
-        return ret  # 返回输出（未经过Softmax）
+        ret = self.fc(seq)  # Input data passes through a fully connected layer.
+        return ret  # Return output (without Softmax)

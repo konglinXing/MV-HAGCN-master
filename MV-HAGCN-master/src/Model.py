@@ -85,12 +85,12 @@ class MultiHeadSelfAttention(nn.Module):
         K = self.k_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         V = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
 
-        # 计算注意力分数
+        # Calculate Attention Score
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.head_dim)
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = self.dropout(attn_weights)
 
-        # 应用注意力权重
+        # Apply Attention Weights
         out = torch.matmul(attn_weights, V)
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, embed_dim)
         out = self.out_proj(out)
@@ -108,7 +108,7 @@ class EnhancedGraphConvolution(nn.Module):
         self.attention_type = attention_type
         self.dropout_rate = dropout
 
-        # 权重参数
+        # Weighting Parameters
         self.weight = nn.Parameter(torch.Tensor(in_features, out_features))
         self.bias = nn.Parameter(torch.Tensor(out_features))
 
@@ -119,11 +119,11 @@ class EnhancedGraphConvolution(nn.Module):
         else:
             self.attention = None
 
-        # Dropout 层
+        # Dropout Layer
         if dropout > 0:
             self.dropout = nn.Dropout(dropout)
 
-        # 激活函数
+        # Activation function
         if activation == 'relu':
             self.activation = nn.ReLU(inplace=True)
         elif activation == 'leaky_relu':
@@ -162,31 +162,31 @@ class EnhancedGraphConvolution(nn.Module):
         if adj.dtype != self.weight.dtype:
             adj = adj.to(self.weight.dtype)
 
-        # 应用注意力机制
+        # Applying Attention Mechanisms
         if self.attention is not None:
             if self.attention_type == 'multihead':
-                # 多头注意力需要3D输入 [batch, seq, features]
+                # Multi-head attention requires 3D input [batch, seq, features]
                 x_3d = x.unsqueeze(0)  # [1, num_nodes, in_features]
                 x_attended = self.attention(x_3d)
                 x = x_attended.squeeze(0)  # [num_nodes, in_features]
             else:
                 x = self.attention(x)
 
-        # 线性变换
+        # Linear transformation
         support = torch.mm(x, self.weight)
 
         # Dropout
         if hasattr(self, 'dropout') and self.training:
             support = self.dropout(support)
 
-        # 图卷积操作
+        # Image Convolution Operation
         output = torch.mm(adj, support)
 
-        # 添加偏置
+        # Add bias
         if self.bias is not None:
             output = output + self.bias
 
-        # 激活函数
+        # Activation function
         if self.activation is not None:
             output = self.activation(output)
 
@@ -231,18 +231,18 @@ class MVHAGCN(nn.Module):
 
         self.dropout = dropout
 
-        self.weight_meta_path = Parameter(torch.FloatTensor(878, 878), requires_grad=True)
+        self.weight_meta_path = Parameter(torch.FloatTensor(1444, 1444), requires_grad=True)
         self.weight_b = torch.nn.Parameter(torch.FloatTensor(5, 1), requires_grad=True)
         self.weight_c = torch.nn.Parameter(torch.FloatTensor(3, 1), requires_grad=True)
 
-        # 卷积后的融合系数
+        # Convolved fusion coefficient
         self.weight_f = torch.nn.Parameter(torch.FloatTensor(1, 1), requires_grad=True)
         self.weight_f1 = torch.nn.Parameter(torch.FloatTensor(1, 1), requires_grad=True)
         self.weight_f2 = torch.nn.Parameter(torch.FloatTensor(1, 1), requires_grad=True)
         self.weight_f3 = torch.nn.Parameter(torch.FloatTensor(1, 1), requires_grad=True)
         self.weight_f4 = torch.nn.Parameter(torch.FloatTensor(1, 1), requires_grad=True)
 
-        # 初始化参数
+        # Initialization parameters
         torch.nn.init.uniform_(self.weight_b, a=0.08, b=0.12)
         torch.nn.init.uniform_(self.weight_c, a=0.08, b=0.12)
         torch.nn.init.uniform_(self.weight_f, a=0.90, b=1.05)
@@ -261,24 +261,24 @@ class MVHAGCN(nn.Module):
     def forward(self, feature, A, B, o_ass, layer, use_relu=True):
         print(feature.shape)
 
-        # 获取模型所在的设备
+        # Retrieve the device where the model is located
         device = next(self.parameters()).device
 
-        # 子网络融合
+        # Subnetwork Integration
         final_A = adj_matrix_weight_merge(A, self.weight_b.to(device))
         final_B = adj_matrix_weight_merge(B, self.weight_c.to(device))
 
-        # 阈值处理
+        # Threshold processing
         index = torch.where(final_A < 0.015)
         final_A[index[0], index[1]] = 0
         index_B = torch.where(final_B < 0.15)
         final_B[index_B[0], index_B[1]] = 0
 
-        # 构建最终邻接矩阵
-        all0 = np.zeros((383, 383))
-        all01 = np.zeros((495, 495))
+        # Construct the final adjacency matrix
+        all0 = np.zeros((591, 591))
+        all01 = np.zeros((853, 853))
 
-        # 确保所有张量在同一个设备上
+        # Ensure all tensors reside on the same device.
         o_ass_tensor = torch.as_tensor(o_ass).to(device)
         o_ass_T_tensor = torch.as_tensor(o_ass.T).to(device)
 
@@ -287,7 +287,7 @@ class MVHAGCN(nn.Module):
             (final_A.to(device), torch.fliplr(torch.flipud(o_ass_T_tensor))), 0)
         final_hcg = torch.cat((adjacency_matrix1, adjacency_matrix2), 1)
 
-        # 处理特征输入并确保在正确的设备上
+        # Process feature inputs and ensure they are delivered to the correct device.
         try:
             feature = torch.tensor(feature.astype(float).toarray(), device=device)
         except:
@@ -296,7 +296,7 @@ class MVHAGCN(nn.Module):
             except:
                 feature = feature.to(device)
 
-        # 使用EnhancedGraphConvolution作为前两层
+        # Use EnhancedGraphConvolution as the first two layers
         U1 = self.gc1(feature, final_hcg)
         if layer >= 2:
             U2 = self.gc2(U1, final_hcg)
@@ -307,7 +307,7 @@ class MVHAGCN(nn.Module):
         if layer >= 5:
             U5 = self.gc5(U4, final_hcg)
 
-        # 合并各层输出
+        # Merge the outputs of each layer
         if layer == 1:
             H = U1 * self.weight_f.to(device)
         elif layer == 2:
@@ -325,5 +325,5 @@ class MVHAGCN(nn.Module):
 
 
 if __name__ == "__main__":
-    Model = MVHAGCN(nfeat=878, nhid=384, out=200, dropout=0, stdv=1. / 72, layer=2)
+    Model = MVHAGCN(nfeat=1444, nhid=384, out=200, dropout=0, stdv=1. / 72, layer=2)
     print(Model)
